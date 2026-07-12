@@ -7,7 +7,7 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
-    "start:prod": "npx prisma db push --skip-generate && node dist/main",
+    "start:prod": "npx prisma db push --skip-generate; node dist/main",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "lint": "eslint src --ext .ts",

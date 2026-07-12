@@ -1,0 +1,21 @@
+{
+  "name": "duet-monorepo",
+  "version": "0.1.0",
+  "description": "A private digital home for couples",
+  "private": true,
+  "workspaces": [
+    "apps/backend",
+    "apps/mobile",
+    "packages/shared",
+    "packages/ui"
+  ],
+  "scripts": {
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:mobile": "pnpm --filter mobile start",
+    "build:backend": "pnpm --filter backend build",
+    "build:mobile": "pnpm --filter mobile build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format"
+  }
+}

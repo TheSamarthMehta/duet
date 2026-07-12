@@ -1,2 +1,3 @@
 [phases.setup]
-aptPkgs = ["openssl"]
+nixPkgs = ["openssl"]
+aptPkgs = ["openssl", "libssl-dev"]

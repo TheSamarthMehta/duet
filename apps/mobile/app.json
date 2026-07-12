@@ -6,19 +6,27 @@
     "orientation": "portrait",
     "scheme": "duet",
     "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.duet.app"
     },
     "android": {
       "package": "com.duet.app",
-      "permissions": ["CAMERA", "RECORD_AUDIO"]
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ]
     },
     "extra": {
       "eas": {
         "projectId": ""
       }
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

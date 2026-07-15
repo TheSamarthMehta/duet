@@ -43,8 +43,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.coupleId = couple.id;
         client.room = `couple:${couple.id}`;
         client.join(client.room);
-        // Tell partner we're online
+
+        // Tell the partner we're online...
         client.to(client.room).emit('online', { userId: client.userId });
+        // ...and tell us whether they already were. Without this, whoever
+        // connects first never learns about the other.
+        client.emit('presence', { partnerOnline: await this.isPartnerOnline(client) });
       }
     } catch {
       client.disconnect();
@@ -57,14 +61,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  /** True when someone other than `client` is in the couple's room. */
+  private async isPartnerOnline(client: AuthedSocket): Promise<boolean> {
+    if (!client.room) return false;
+    const sockets = await this.server.in(client.room).fetchSockets();
+    return sockets.some((s) => s.id !== client.id);
+  }
+
   @SubscribeMessage('sendMessage')
   async onSendMessage(
     @ConnectedSocket() client: AuthedSocket,
-    @MessageBody() data: { content: string; imageUrl?: string }
+    @MessageBody() data: { content: string; imageUrl?: string; clientId?: string }
   ) {
     if (!client.userId || !client.room) return;
     const message = await this.chat.createMessage(client.userId, data.content, data.imageUrl);
-    this.server.to(client.room).emit('receiveMessage', message);
+    // clientId is echoed back so the sender can match this against the message
+    // it rendered optimistically instead of showing it twice.
+    this.server.to(client.room).emit('receiveMessage', { ...message, clientId: data.clientId });
     return message;
   }
 
@@ -81,13 +94,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('messageSeen')
   async onMessageSeen(@ConnectedSocket() client: AuthedSocket) {
     if (!client.userId || !client.room) return;
+    const seenAt = new Date().toISOString();
     await this.chat.markSeen(client.userId);
-    client.to(client.room).emit('messageSeen', { userId: client.userId });
+    client.to(client.room).emit('messageSeen', { userId: client.userId, seenAt });
   }
 
   @SubscribeMessage('ping:presence')
-  onPresencePing(@ConnectedSocket() client: AuthedSocket) {
-    if (client.room) client.to(client.room).emit('online', { userId: client.userId });
+  async onPresencePing(@ConnectedSocket() client: AuthedSocket) {
+    if (!client.room) return;
+    client.to(client.room).emit('online', { userId: client.userId });
+    client.emit('presence', { partnerOnline: await this.isPartnerOnline(client) });
   }
 
   // ---- Video call signaling (Jitsi room coordination) ----
